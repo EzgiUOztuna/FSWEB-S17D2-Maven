@@ -1,80 +1,77 @@
 package com.workintech.s17d2.rest;
+import com.workintech.s17d2.dto.DeveloperResponse;
 import com.workintech.s17d2.model.*;
 import com.workintech.s17d2.tax.Taxable;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
-@RequestMapping(path = "/workintech/developers")
+@RequestMapping(path = "/developers")
 public class DeveloperController {
     private Taxable taxable;
-    private Map<Integer, Developer> developers;
+    public Map<Integer, Developer> developers;
 
     public Map<Integer, Developer> getDevelopers() {
         return developers;
     }
 
-    // Initialize the developers map
-    @PostConstruct
-    public void init() {
-        developers = new HashMap<>();
-        this.developers.put(1, new Developer(1, "Ezgi", 50000, Experience.JUNIOR));
-    }
-
     // Constructor with Dependency Injection
+    @Autowired
     public DeveloperController(Taxable taxable) {
         this.taxable=taxable;
     }
 
-    // Endpoint: Get all developers as a list
-    @GetMapping
-    public List<Developer> getAllDevelopers(){
-        return new ArrayList<>(developers.values());
-    }
-
-    @GetMapping("/{id}")
-    public Developer getAllDeveloper(@PathVariable int id){
-        /*if(id<0){
-            return null;
-        }*/
-        return this.developers.get(id);
+    // Initialize the developers map
+    @PostConstruct
+    public void init() {
+        this.developers = new HashMap<>();
+        this.developers.put(1, new JuniorDeveloper(1, "Ezgi", 50000));
     }
 
     @PostMapping
-    public void addDeveloper(@RequestBody Developer developer){
-        double salary = developer.getSalary();
-       switch (developer.getExperience()){
-           case JUNIOR:
-               salary -= salary* taxable.getSimpleTaxRate();
-               developer =new JuniorDeveloper(developer.getId(), developer.getName(), salary);
-               break;
-           case MID:
-               salary -= salary* taxable.getMiddleTaxRate();
-               developer =new MidDeveloper(developer.getId(), developer.getName(), salary);
-               break;
-           case SENIOR:
-               salary -= salary* taxable.getUpperTaxRate();
-               developer =new SeniorDeveloper(developer.getId(), developer.getName(), salary);
-               break;
-       }
-        // Add the developer to the map after modification
-        this.developers.put(developer.getId(), developer);
+    @ResponseStatus(HttpStatus.CREATED)
+    public DeveloperResponse save(@RequestBody Developer developer){
+        Developer createdDeveloper = DeveloperFactory.createdDeveloper(developer, taxable);
+        if(Objects.nonNull(createdDeveloper)){
+            developers.put(createdDeveloper.getId(), createdDeveloper);
+        }
+        return new DeveloperResponse(createdDeveloper, HttpStatus.CREATED.value(), "create işlemi başarılı" );
+    }
+
+
+    // Endpoint: Get all developers as a list
+    @GetMapping
+    public List<Developer> getAllDevelopers(){
+        return developers.values().stream().toList();
+    }
+
+    @GetMapping("/{id}")
+    public DeveloperResponse getById(@PathVariable int id){
+        Developer foundDeveloper = this.developers.get(id);
+        if(foundDeveloper == null){
+            return new DeveloperResponse(null, HttpStatus.NOT_FOUND.value(), id + "ile search yapıldığında kayıt bulunamadı.");
+        } else {
+            return new DeveloperResponse(foundDeveloper, HttpStatus.OK.value(), id + "ile search başarılı.");
+        }
     }
 
     @PutMapping("/{id}")
-    public Developer updateDeveloper(@PathVariable int id, @RequestBody Developer newDeveloper){
-        developers.replace(id, newDeveloper);
-        return newDeveloper;
+    public DeveloperResponse updateDeveloper(@PathVariable int id, @RequestBody Developer developer){
+        developer.setId(id);
+        Developer newDeveloper = DeveloperFactory.createdDeveloper(developer, taxable);
+        this.developers.put(id, newDeveloper);
+        return new DeveloperResponse(newDeveloper, HttpStatus.OK.value(), "update başarılı");
     }
 
     @DeleteMapping("/{id}")
-    public void deleteDeveloper(@PathVariable int id){
+    public DeveloperResponse deleteDeveloper(@PathVariable int id){
+        Developer removedDeveloper = this.developers.get(id);
         this.developers.remove(id);
+        return new DeveloperResponse(removedDeveloper, HttpStatus.NO_CONTENT.value(), "silme işlemi başarılı");
     }
 
 }
