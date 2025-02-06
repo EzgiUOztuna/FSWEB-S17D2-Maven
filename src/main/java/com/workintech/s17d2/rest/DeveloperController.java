@@ -1,77 +1,71 @@
 package com.workintech.s17d2.rest;
+
 import com.workintech.s17d2.dto.DeveloperResponse;
-import com.workintech.s17d2.model.*;
+import com.workintech.s17d2.model.Developer;
+import com.workintech.s17d2.model.DeveloperFactory;
+import com.workintech.s17d2.model.SeniorDeveloper;
 import com.workintech.s17d2.tax.Taxable;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping(path = "/developers")
 public class DeveloperController {
-    private Taxable taxable;
     public Map<Integer, Developer> developers;
 
-    public Map<Integer, Developer> getDevelopers() {
-        return developers;
-    }
+    private Taxable taxable;
 
-    // Constructor with Dependency Injection
     @Autowired
     public DeveloperController(Taxable taxable) {
-        this.taxable=taxable;
+        this.taxable = taxable;
     }
-
-    // Initialize the developers map
     @PostConstruct
-    public void init() {
+    public void init(){
         this.developers = new HashMap<>();
-        this.developers.put(1, new JuniorDeveloper(1, "Ezgi", 50000));
+        this.developers.put(1, new SeniorDeveloper(1, "melisa", 1000d));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DeveloperResponse save(@RequestBody Developer developer){
-        Developer createdDeveloper = DeveloperFactory.createdDeveloper(developer, taxable);
+        Developer createdDeveloper = DeveloperFactory.createDeveloper(developer, taxable);
         if(Objects.nonNull(createdDeveloper)){
             developers.put(createdDeveloper.getId(), createdDeveloper);
         }
-        return new DeveloperResponse(createdDeveloper, HttpStatus.CREATED.value(), "create işlemi başarılı" );
+        return new DeveloperResponse(createdDeveloper, HttpStatus.CREATED.value(), "İşlem başarılı");
     }
-
-
-    // Endpoint: Get all developers as a list
     @GetMapping
-    public List<Developer> getAllDevelopers(){
+    public List<Developer> getAll(){
         return developers.values().stream().toList();
     }
-
     @GetMapping("/{id}")
-    public DeveloperResponse getById(@PathVariable int id){
+    public DeveloperResponse getById(@PathVariable("id") int id){
         Developer foundDeveloper = this.developers.get(id);
         if(foundDeveloper == null){
-            return new DeveloperResponse(null, HttpStatus.NOT_FOUND.value(), id + "ile search yapıldığında kayıt bulunamadı.");
-        } else {
-            return new DeveloperResponse(foundDeveloper, HttpStatus.OK.value(), id + "ile search başarılı.");
+            return new DeveloperResponse(null, HttpStatus.NOT_FOUND.value(), id + "ile search yapılamadı." );
         }
+        return new DeveloperResponse(foundDeveloper, HttpStatus.OK.value(), + id + "search başarılı");
     }
 
     @PutMapping("/{id}")
-    public DeveloperResponse updateDeveloper(@PathVariable int id, @RequestBody Developer developer){
+    public DeveloperResponse update(@PathVariable("id") int id, @RequestBody Developer developer){
         developer.setId(id);
-        Developer newDeveloper = DeveloperFactory.createdDeveloper(developer, taxable);
+        Developer newDeveloper = DeveloperFactory.createDeveloper(developer, taxable);
         this.developers.put(id, newDeveloper);
-        return new DeveloperResponse(newDeveloper, HttpStatus.OK.value(), "update başarılı");
+        return new DeveloperResponse(newDeveloper, HttpStatus.OK.value(), "başarılı");
     }
-
     @DeleteMapping("/{id}")
-    public DeveloperResponse deleteDeveloper(@PathVariable int id){
-        Developer removedDeveloper = this.developers.get(id);
+    public DeveloperResponse delete(@PathVariable("id") int id){
+        Developer removeDeveloper = this.developers.get(id);
         this.developers.remove(id);
-        return new DeveloperResponse(removedDeveloper, HttpStatus.NO_CONTENT.value(), "silme işlemi başarılı");
+        return new DeveloperResponse(removeDeveloper, HttpStatus.NO_CONTENT.value(), "silindi");
     }
 
 }

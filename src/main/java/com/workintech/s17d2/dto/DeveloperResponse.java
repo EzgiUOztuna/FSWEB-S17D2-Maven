@@ -17,20 +17,20 @@ public class DeveloperResponse {
         return developer;
     }
 
-    public void setDeveloper(Developer developer) {
-        this.developer = developer;
-    }
-
     public int getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
     public String getMessage() {
         return message;
+    }
+
+    public void setDeveloper(Developer developer) {
+        this.developer = developer;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public void setMessage(String message) {

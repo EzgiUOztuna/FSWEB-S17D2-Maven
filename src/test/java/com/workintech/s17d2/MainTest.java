@@ -195,7 +195,7 @@ class MainTest {
     @DisplayName("DeveloperController:DeveloperMapCheck")
     @Order(1)
     void developersMapShouldNotBeNullAfterInitialization() {
-        assertNotNull(controller.getDevelopers(), "The developers map should be initialized (not null) after @PostConstruct");
+        assertNotNull(controller.developers, "The developers map should be initialized (not null) after @PostConstruct");
     }
 
     @Test
