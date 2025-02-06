@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestController
-@RequestMapping(path = "/developers")
+@RequestMapping("/developers")
 public class DeveloperController {
     public Map<Integer, Developer> developers;
 
